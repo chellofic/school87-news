@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Новости школы №87</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    background: #f4f6fb;
+    color: #1b1f2a;
+    line-height: 1.5;
+    padding-bottom: 80px;
+  }
+  header {
+    background: #fff; border-bottom: 1px solid #e5e7eb;
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px;
+    position: sticky; top: 0; z-index: 50;
+  }
+  .logo {
+    width: 40px; height: 40px; border-radius: 10px;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff; display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 15px; flex-shrink: 0;
+  }
+  .school-name h1 { margin: 0; font-size: 16px; }
+  .school-name p { margin: 0; font-size: 11px; color: #6b7280; }
+  .badge {
+    margin-left: auto; font-size: 11px; font-weight: 700;
+    color: #dc2626; background: #fee2e2;
+    padding: 3px 8px; border-radius: 999px; display: none;
+  }
+  .badge.show { display: inline-block; }
+  #connStatus {
+    margin-left: auto; font-size: 10px; color: #6b7280;
+    padding: 3px 8px; border-radius: 999px; background: #f3f4f6;
+  }
+  #connStatus.ok { background: #dcfce7; color: #166534; }
+  #connStatus.err { background: #fee2e2; color: #991b1b; }
+
+  .hero {
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    color: #fff; margin: 12px; border-radius: 14px; padding: 20px;
+  }
+  .hero h2 { margin: 0 0 6px; font-size: 20px; }
+  .hero p { margin: 0; font-size: 13px; opacity: 0.92; }
+  .demo-tag {
+    display: inline-block; background: rgba(255,255,255,0.2);
+    padding: 3px 10px; border-radius: 999px;
+    font-size: 11px; font-weight: 700; margin-bottom: 10px;
+  }
+
+  main { padding: 0 12px; }
+  .toolbar { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+  .search-wrap { position: relative; }
+  .search-wrap input {
+    width: 100%; padding: 11px 14px 11px 38px;
+    border: 1px solid #e5e7eb; border-radius: 10px;
+    font-size: 14px; outline: none; background: #fff;
+    color: #1b1f2a; font-family: inherit;
+  }
+  .search-wrap input:focus {
+    border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+  }
+  .search-wrap::before {
+    content: "🔍"; position: absolute; left: 12px; top: 50%;
+    transform: translateY(-50%); font-size: 14px;
+    opacity: 0.5; pointer-events: none;
+  }
+  .filter-select {
+    padding: 11px 14px; border: 1px solid #e5e7eb;
+    border-radius: 10px; font-size: 14px;
+    background: #fff; color: #1b1f2a;
+    font-family: inherit; outline: none; cursor: pointer;
+  }
+
+  .section-title {
+    display: flex; align-items: center; gap: 10px;
+    margin: 0 0 12px; font-size: 18px;
+  }
+  .section-title .count { font-size: 12px; color: #6b7280; font-weight: 400; }
+  .news-grid { display: flex; flex-direction: column; gap: 12px; }
+  .news-card {
+    background: #fff; border: 1px solid #e5e7eb;
+    border-radius: 14px; overflow: hidden;
+  }
+  .news-image {
+    width: 100%; height: 160px; object-fit: cover;
+    background: #e5e7eb; display: block;
+  }
+  .news-body { padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; }
+  .news-date { font-size: 12px; color: #6b7280; font-weight: 600; }
+  .news-title { margin: 0; font-size: 16px; font-weight: 700; }
+  .news-text { margin: 0; font-size: 14px; color: #374151; white-space: pre-wrap; }
+  .news-tag {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    background: #eef2ff; color: #2563eb;
+    padding: 3px 8px; border-radius: 999px; align-self: flex-start;
+  }
+  .empty {
+    text-align: center; color: #6b7280; padding: 30px;
+    background: #fff; border: 1px dashed #e5e7eb; border-radius: 14px;
+  }
+
+  #adminBtn {
+    position: fixed; bottom: 16px; right: 16px;
+    width: 56px; height: 56px; border-radius: 50%;
+    background: #dc2626; color: #fff;
+    border: none; cursor: pointer;
+    font-size: 24px; font-weight: 700;
+    box-shadow: 0 6px 20px rgba(220,38,38,0.4);
+    z-index: 300;
+  }
+  #adminBtn:active { transform: scale(0.95); }
+
+  .admin {
+    display: none; background: #fff;
+    border: 2px solid #dc2626; border-radius: 14px;
+    padding: 16px; margin: 12px; position: relative;
+  }
+  .admin.open { display: block; }
+  .admin h3 { margin: 0 0 14px; font-size: 17px; color: #dc2626; }
+  .admin-close {
+    position: absolute; top: 10px; right: 10px;
+    background: #f3f4f6; border: none; width: 32px; height: 32px;
+    border-radius: 8px; cursor: pointer; font-size: 16px;
+  }
+  .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+  .form-row label { font-size: 13px; font-weight: 600; color: #374151; }
+  .form-row input, .form-row textarea, .form-row select {
+    padding: 10px 12px; border: 1px solid #e5e7eb;
+    border-radius: 8px; font-size: 14px; font-family: inherit;
+    outline: none; background: #fff; color: #1b1f2a; width: 100%;
+  }
+  .form-row input:focus, .form-row textarea:focus, .form-row select:focus {
+    border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,0.15);
+  }
+  .form-row textarea { resize: vertical; min-height: 70px; }
+  .image-preview {
+    margin-top: 8px; border: 1px dashed #e5e7eb;
+    border-radius: 10px; padding: 10px; text-align: center;
+    min-height: 50px; display: flex; align-items: center;
+    justify-content: center; color: #6b7280; font-size: 13px;
+  }
+  .image-preview img { max-width: 100%; max-height: 180px; border-radius: 8px; }
+  .admin-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn {
+    border: none; border-radius: 8px; padding: 10px 14px;
+    font-size: 14px; font-weight: 600; cursor: pointer; font-family: inherit;
+  }
+  .btn-primary { background: #2563eb; color: #fff; }
+  .btn-ghost { background: #f3f4f6; color: #1b1f2a; }
+  .btn-danger { background: #fee2e2; color: #dc2626; }
+
+  .admin-list { margin-top: 16px; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+  .admin-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 13px;
+  }
+  .admin-item:last-child { border-bottom: none; }
+  .admin-item .info { flex: 1; min-width: 0; }
+  .admin-item .info strong {
+    display: block; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .admin-item .info span { font-size: 11px; color: #6b7280; }
+
+  footer {
+    text-align: center; padding: 20px;
+    color: #6b7280; font-size: 12px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">87</div>
+  <div class="school-name">
+    <h1>Школа №87</h1>
+    <p>Новости · облачная версия</p>
+  </div>
+  <span id="connStatus">подключение...</span>
+</header>
+
+<section class="hero">
+  <div class="demo-tag">LIVE</div>
+  <h2>Новости школы №87</h2>
+  <p>Все новости хранятся в облаке и видны всем посетителям сразу.</p>
+</section>
+
+<main>
+  <div class="toolbar">
+    <div class="search-wrap">
+      <input type="text" id="searchInput" placeholder="Поиск по новостям...">
+    </div>
+    <select class="filter-select" id="filterTag">
+      <option value="">Все рубрики</option>
+    </select>
+  </div>
+
+  <section>
+    <h2 class="section-title">
+      Новости
+      <span class="count" id="newsCount"></span>
+    </h2>
+    <div class="news-grid" id="newsGrid">
+      <div class="empty">Загрузка новостей из облака...</div>
+    </div>
+  </section>
+</main>
+
+<section class="admin" id="adminPanel">
+  <button class="admin-close" id="adminClose">✕</button>
+  <h3>Панель администратора</h3>
+
+  <div class="form-row">
+    <label for="newsTitle">Заголовок</label>
+    <input type="text" id="newsTitle" placeholder="Заголовок новости">
+  </div>
+
+  <div class="form-row">
+    <label for="newsText">Текст</label>
+    <textarea id="newsText" placeholder="Текст новости..."></textarea>
+  </div>
+
+  <div class="form-row">
+    <label for="newsTag">Рубрика</label>
+    <select id="newsTag">
+      <option>Школьная жизнь</option>
+      <option>Происшествия</option>
+      <option>Столовая</option>
+      <option>Олимпиады</option>
+      <option>Кружки</option>
+      <option>Мистика</option>
+    </select>
+  </div>
+
+  <div class="form-row">
+    <label>Картинка (ссылка)</label>
+    <input type="text" id="newsImageUrl" placeholder="https://...jpg">
+    <input type="file" id="newsImageFile" accept="image/*" style="margin-top:6px;">
+    <div class="image-preview" id="imagePreview">Картинка не выбрана</div>
+  </div>
+
+  <div class="admin-actions">
+    <button class="btn btn-primary" id="addNewsBtn">Добавить в облако</button>
+    <button class="btn btn-ghost" id="clearImageBtn">Убрать картинку</button>
+    <button class="btn btn-ghost" id="seedDemoBtn">Загрузить демо-новости</button>
+  </div>
+
+  <div class="admin-list" id="adminList"></div>
+</section>
+
+<footer>© 2025 Школа №87 · Новости в Firebase Firestore</footer>
+
+<button id="adminBtn" title="Админка">⚙</button>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+// ===== ТВОЙ КОНФИГ FIREBASE =====
+const firebaseConfig = {
+  apiKey: "AIzaSyBt8EKunRlqN279Da6fLlE3kO-kOSC2e9g",
+  authDomain: "notoficialschool87news.firebaseapp.com",
+  projectId: "notoficialschool87news",
+  storageBucket: "notoficialschool87news.firebasestorage.app",
+  messagingSenderId: "446830548741",
+  appId: "1:446830548741:web:53c80f4a95a41ce535896c"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const newsCol = collection(db, 'news');
+
+// ===== СОСТОЯНИЕ =====
+let news = [];
+let pendingImage = '';
+const ADMIN_PASSWORD = '28977744';
+
+// ===== DOM =====
+const $ = id => document.getElementById(id);
+const newsGrid = $('newsGrid');
+const newsCount = $('newsCount');
+const adminPanel = $('adminPanel');
+const adminList = $('adminList');
+const searchInput = $('searchInput');
+const filterTag = $('filterTag');
+const imagePreview = $('imagePreview');
+const newsImageUrl = $('newsImageUrl');
+const newsImageFile = $('newsImageFile');
+const connStatus = $('connStatus');
+
+// ===== HELPERS =====
+function esc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+function fmtDate(iso) {
+  if (!iso) return '';
+  const d = iso.toDate ? iso.toDate() : new Date(iso);
+  if (isNaN(d)) return String(iso);
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+// ===== РЕНДЕР =====
+function visibleNews() {
+  const q = (searchInput.value || '').trim().toLowerCase();
+  const tag = filterTag.value;
+  return news.filter(item => {
+    if (tag && item.tag !== tag) return false;
+    if (!q) return true;
+    const hay = (item.title + ' ' + item.text + ' ' + (item.tag || '')).toLowerCase();
+    return hay.includes(q);
+  });
+}
+
+function render() {
+  const vis = visibleNews();
+  newsCount.textContent = '· ' + vis.length + ' из ' + news.length;
+
+  if (!news.length) {
+    newsGrid.innerHTML = '<div class="empty">Пока новостей нет. Добавь первую через ⚙ в углу.</div>';
+    return;
+  }
+  if (!vis.length) {
+    newsGrid.innerHTML = '<div class="empty">Ничего не найдено.</div>';
+    return;
+  }
+
+  let html = '';
+  for (const item of vis) {
+    const img = item.image
+      ? '<img class="news-image" src="' + esc(item.image) + '" alt="" onerror="this.style.display=\'none\'">'
+      : '';
+    html += '<article class="news-card">' + img +
+      '<div class="news-body">' +
+        '<span class="news-tag">' + esc(item.tag || 'Новость') + '</span>' +
+        '<div class="news-date">' + esc(fmtDate(item.date)) + '</div>' +
+        '<h3 class="news-title">' + esc(item.title) + '</h3>' +
+        '<p class="news-text">' + esc(item.text) + '</p>' +
+      '</div></article>';
+  }
+  newsGrid.innerHTML = html;
+}
+
+function renderAdmin() {
+  adminList.innerHTML = '';
+  if (!news.length) {
+    adminList.innerHTML = '<div class="empty">Пусто.</div>';
+    return;
+  }
+  for (const item of news) {
+    const row = document.createElement('div');
+    row.className = 'admin-item';
+    row.innerHTML =
+      '<div class="info">' +
+        '<strong>' + esc(item.title) + '</strong>' +
+        '<span>' + esc(item.tag || '') + ' · ' + esc(fmtDate(item.date)) + '</span>' +
+      '</div>' +
+      '<button class="btn btn-danger">Удалить</button>';
+    row.querySelector('button').addEventListener('click', async () => {
+      if (!confirm('Удалить новость «' + item.title + '»?')) return;
+      try {
+        await deleteDoc(doc(db, 'news', item.id));
+      } catch (e) {
+        alert('Ошибка удаления: ' + e.message);
+      }
+    });
+    adminList.appendChild(row);
+  }
+}
+
+function renderTags() {
+  const cur = filterTag.value;
+  const tags = [];
+  for (const n of news) {
+    if (n.tag && !tags.includes(n.tag)) tags.push(n.tag);
+  }
+  tags.sort();
+  let html = '<option value="">Все рубрики</option>';
+  for (const t of tags) {
+    html += '<option value="' + esc(t) + '">' + esc(t) + '</option>';
+  }
+  filterTag.innerHTML = html;
+  if (tags.includes(cur)) filterTag.value = cur;
+}
+
+function updatePreview() {
+  if (pendingImage) {
+    imagePreview.innerHTML = '<img src="' + esc(pendingImage) + '" alt="">';
+  } else {
+    imagePreview.textContent = 'Картинка не выбрана';
+  }
+}
+
+// ===== FIREBASE: ЗАГРУЗКА В РЕАЛЬНОМ ВРЕМЕНИ =====
+onSnapshot(newsCol,
+  snapshot => {
+    news = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+    news.sort((a, b) => {
+      const ta = a.date?.toDate ? a.date.toDate().getTime() : new Date(a.date || 0).getTime();
+      const tb = b.date?.toDate ? b.date.toDate().getTime() : new Date(b.date || 0).getTime();
+      return tb - ta;
+    });
+    connStatus.textContent = '☁ онлайн';
+    connStatus.className = 'ok';
+    render(); renderAdmin(); renderTags();
+  },
+  error => {
+    console.error(error);
+    connStatus.textContent = '⚠ ошибка';
+    connStatus.className = 'err';
+    newsGrid.innerHTML = '<div class="empty">Ошибка подключения к Firebase: ' + esc(error.message) + '</div>';
+  }
+);
+
+// ===== ДЕЙСТВИЯ =====
+async function addNews() {
+  const title = $('newsTitle').value.trim();
+  const text = $('newsText').value.trim();
+  const tag = $('newsTag').value;
+  if (!title) { alert('Введите заголовок'); return; }
+  if (!text) { alert('Введите текст'); return; }
+
+  try {
+    await addDoc(newsCol, {
+      title, text, tag,
+      date: new Date().toISOString().slice(0, 10),
+      image: pendingImage || ''
+    });
+    $('newsTitle').value = '';
+    $('newsText').value = '';
+    pendingImage = '';
+    newsImageUrl.value = '';
+    newsImageFile.value = '';
+    updatePreview();
+    alert('Новость добавлена в облако!');
+  } catch (e) {
+    alert('Ошибка добавления: ' + e.message);
+  }
+}
+
+async function seedDemo() {
+  if (!confirm('Добавить 6 демо-новостей в облако?')) return;
+  const demo = [
+    { title: 'Школьный кот стал заместителем директора по уюту', text: 'Кот Барсик избран единогласно. Первый указ — перерыв на поглаживание.', tag: 'Школьная жизнь', date: '2025-09-22' },
+    { title: 'В столовой ввели предмет «Компот»', text: 'Уроки по вторникам. Домашка: выпить стакан и не поморщиться.', tag: 'Столовая', date: '2025-09-20' },
+    { title: 'Ученик победил в олимпиаде по сну, но проспал награждение', text: 'Жюри отметило глубокий подход. Награду вручат позже.', tag: 'Олимпиады', date: '2025-09-18' },
+    { title: 'На перемене нашли портал в кабинет математики', text: 'Учёные школы продолжают исследования. Ученики просят спортзал.', tag: 'Мистика', date: '2025-09-15' },
+    { title: 'Открыта запись в кружок робототехники', text: 'Роботы иногда пытаются уйти домой. Запись у классных.', tag: 'Кружки', date: '2025-09-12' },
+    { title: 'Туалетная бумага объявила забастовку', text: 'Требования: уважение, отдельная полка, отсутствие экспериментов.', tag: 'Происшествия', date: '2025-09-10' }
+  ];
+  for (const d of demo) {
+    await addDoc(newsCol, { ...d, image: '' });
+  }
+  alert('Демо-новости загружены в облако!');
+}
+
+// ===== АДМИНКА =====
+function toggleAdmin(force) {
+  const open = typeof force === 'boolean' ? force : !adminPanel.classList.contains('open');
+  adminPanel.classList.toggle('open', open);
+  if (open) {
+    renderAdmin();
+    adminPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}
+
+// ===== СОБЫТИЯ =====
+$('adminBtn').addEventListener('click', () => {
+  const pass = prompt('Введите пароль для входа в админку:');
+  if (pass === null) return;
+  if (pass === ADMIN_PASSWORD) toggleAdmin();
+  else alert('Неверный пароль');
+});
+
+$('adminClose').addEventListener('click', () => toggleAdmin(false));
+$('addNewsBtn').addEventListener('click', addNews);
+$('seedDemoBtn').addEventListener('click', seedDemo);
+$('clearImageBtn').addEventListener('click', () => {
+  pendingImage = '';
+  newsImageUrl.value = '';
+  newsImageFile.value = '';
+  updatePreview();
+});
+
+newsImageUrl.addEventListener('input', () => {
+  pendingImage = newsImageUrl.value.trim();
+  updatePreview();
+});
+
+newsImageFile.addEventListener('change', () => {
+  const file = newsImageFile.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    pendingImage = e.target.result;
+    newsImageUrl.value = '';
+    updatePreview();
+  };
+  reader.readAsDataURL(file);
+});
+
+searchInput.addEventListener('input', render);
+filterTag.addEventListener('change', render);
+updatePreview();
+</script>
+
+</body>
+</html>
